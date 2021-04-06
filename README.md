@@ -22,3 +22,6 @@ Create an application that will scan a specified file
       * threat_found
       * scan_result_i
       * def_time
+
+### Alternative Approach
+Create a web application that will do the above, but also utilize web hooks to recieve scan result instead of polling.
