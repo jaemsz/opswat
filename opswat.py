@@ -45,12 +45,6 @@ def metadefender_cloud_hash_scan(file_sha256):
 
     # Make a request to metadefender cloud to scan file SHA256
     response = requests.get("https://api.metadefender.com/v4/hash/" + file_sha256, headers=headers)
-    if response.status_code == 200:
-        response_json = json.loads(response.text)
-        return response_json
-    
-    # Request failed, so return None
-    # {"error":{"code":404003,"messages":["The hash was not found"]}}
     return json.loads(response.text)
 
 
@@ -72,11 +66,6 @@ def metadefender_cloud_file_scan(file_path):
     
     # Make a request to metadefender cloud to scan the file
     response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=data)
-    if response.status_code == 200:
-        response_json = json.loads(response.text)
-        return response_json
-    
-    # Request failed, so return None
     return json.loads(response.text)
 
 
