@@ -31,6 +31,9 @@ Create an application that will scan a specified file using metadefender cloud A
 ### Unexpected observations
 1. Expected a list of files in the archive in the scan result, but did not see it in my testing.  As a result, I did not implement any code to handle this case.
 
+### Polygot files
+1. Polygot zip/pdf test case file was recognized as zip only.
+
 ### Test cases
 1. PE files
 2. Office documents
