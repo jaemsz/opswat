@@ -8,20 +8,28 @@ import sys
 import time
 
 """
-NOTE:
-    Tested with PE files, office documents, and archive files like zip and 7z.
-    The documention stated that data_id's for each file would be present in
-    the scan result if an archive file was scanned, but in my testing I did
-    not see these fields populated in the scan result JSON object, so I did
-    not implement any code that would display scan results for each file in
-    the archive.
+NOTES:
+    File types tested:
+    1.  PE files
+    2.  Office documents
+    3.  Archive files (zip, 7z)
+
+    Inconsistant results with documentation:
+    1.  Expected a list of files in the archive in the scan result, but
+        did not see it in my testing.  As a result, I did not implement
+        any code to handle this case.
+    
+    Possible performance improvement
+    1.  Expected the file upload API to return right away if an invalid
+        key was specified, but it took longer than expected.  Maybe this
+        is by design?
 """
 
 """
 Register for a free account at portal.opswat.com.
 Copy and paste your API key here
 """
-APIKEY = "<ENTER YOUR API KEY HERE>"
+APIKEY = "<API KEY>"
 
 
 def metadefender_cloud_hash_scan(file_sha256):
@@ -43,7 +51,7 @@ def metadefender_cloud_hash_scan(file_sha256):
     
     # Request failed, so return None
     # {"error":{"code":404003,"messages":["The hash was not found"]}}
-    return None
+    return json.loads(response.text)
 
 
 def metadefender_cloud_file_scan(file_path):
@@ -61,7 +69,7 @@ def metadefender_cloud_file_scan(file_path):
 
     # Read file contents
     data = open(file_path, "rb").read()
-
+    
     # Make a request to metadefender cloud to scan the file
     response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=data)
     if response.status_code == 200:
@@ -69,7 +77,7 @@ def metadefender_cloud_file_scan(file_path):
         return response_json
     
     # Request failed, so return None
-    return None
+    return json.loads(response.text)
 
 
 def metadefender_cloud_file_scan_poll(data_id, timeout=60):
@@ -154,14 +162,19 @@ def main(file_path):
     try:
         # Scan the file SHA256
         scan_result = metadefender_cloud_hash_scan(file_sha256)
-        if not scan_result:
+
+        if "error" in scan_result and scan_result["error"]["code"] == 404003:
             print(f"INFO: Metadefender does not have a record of {file_sha256}")
             print(f"INFO: Uploading {file_sha256} to Metadefender cloud")
-
+            
             # File SHA256 does not exist on metadefender cloud, so
             # upload the file
             scan_result = metadefender_cloud_file_scan(file_path)
-            if scan_result and scan_result["status"] == "inqueue":
+            if "error" in scan_result:
+                print(f"ERROR: {';'.join(scan_result['error']['messages'])}")
+                return
+
+            if "status" in scan_result and scan_result["status"] == "inqueue":
                 print(f"INFO: {file_sha256} added to the scan queue")
                 print(f"INFO: data_id = {scan_result['data_id']}")
                 print("INFO: Polling metadefender cloud for scan results")
@@ -169,15 +182,16 @@ def main(file_path):
                 # The file has been added to the queue, so
                 # now let's just poll metadefender for scan result
                 scan_result = metadefender_cloud_file_scan_poll(scan_result["data_id"])
-
+                if not scan_result:
+                    print("ERROR: Scan timed out.  Try increasing the timeout value.")
+                else:
+                    display_scan_result(scan_result)
+        else:
+            print(f"ERROR: {';'.join(scan_result['error']['messages'])}")
+        
     except requests.exceptions.ConnectionError:
         print(f"ERROR: Check your network connection")
-        scan_result = None
 
-    if not scan_result:
-        print("ERROR: Failed to scan the file")
-    else:
-        display_scan_result(scan_result)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
