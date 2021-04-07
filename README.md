@@ -30,7 +30,6 @@ Create an application that will scan a specified file using metadefender cloud A
 
 ### Unexpected observations
 1. Expected a list of files in the archive in the scan result, but did not see it in my testing.  As a result, I did not implement any code to handle this case.
-2. Expected the file upload API to return right away if an invalid key was specified, but it took longer than expected.  Maybe this is by design?
 
 ### Test cases
 1. PE files
