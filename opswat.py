@@ -13,6 +13,7 @@ NOTES:
     1.  PE files
     2.  Office documents
     3.  Archive files (zip, 7z)
+    4.  Polyglot (zip,pdf)
 
     Inconsistant results with documentation:
     1.  Expected a list of files in the archive in the scan result, but
@@ -175,8 +176,14 @@ def main(file_path):
                     print("ERROR: Scan timed out.  Try increasing the timeout value.")
                 else:
                     display_scan_result(scan_result)
-        else:
+
+        elif "error" in scan_result:
+            # Handle all other type of errors here (ie. invalid key)
             print(f"ERROR: {';'.join(scan_result['error']['messages'])}")
+
+        else:
+            # File SHA256 found, so display scan result
+            display_scan_result(scan_result)
         
     except requests.exceptions.ConnectionError:
         print(f"ERROR: Check your network connection")
