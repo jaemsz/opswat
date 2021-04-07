@@ -18,18 +18,12 @@ NOTES:
     Inconsistant results with documentation:
     1.  Expected a list of files in the archive in the scan result, but
         did not see it in my testing.  As a result, I did not implement
-        any code to handle this case.
-    
-    Possible performance improvement
-    1.  Expected the file upload API to return right away if an invalid
-        key was specified, but it took longer than expected.  Maybe this
-        is by design?
+        any code to handle this case.    
 """
 
-"""
-Register for a free account at portal.opswat.com.
-Copy and paste your API key here
-"""
+
+# Register for a free account at portal.opswat.com.
+# Copy and paste your API key here
 APIKEY = "<API KEY>"
 
 
@@ -148,7 +142,6 @@ def main(file_path):
 
     print(f"INFO: SHA256 of {file_path} is {file_sha256}")
 
-    scan_result = None
     try:
         # Scan the file SHA256
         scan_result = metadefender_cloud_hash_scan(file_sha256)
@@ -160,6 +153,7 @@ def main(file_path):
             # File SHA256 does not exist on metadefender cloud, so
             # upload the file
             scan_result = metadefender_cloud_file_scan(file_path)
+
             if "error" in scan_result:
                 print(f"ERROR: {';'.join(scan_result['error']['messages'])}")
                 return
@@ -176,6 +170,10 @@ def main(file_path):
                     print("ERROR: Scan timed out.  Try increasing the timeout value.")
                 else:
                     display_scan_result(scan_result)
+            
+            else:
+                # Something unexpected happened
+                print("ERROR: Unexpected metadefender cloud scan return value")
 
         elif "error" in scan_result:
             # Handle all other type of errors here (ie. invalid key)
