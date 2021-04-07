@@ -33,6 +33,15 @@ Create an application that will scan a specified file using metadefender cloud A
 
 ### Polygot files
 1. Polygot zip/pdf test case file was recognized as zip only.
+'file_info': {'display_name': 'S(b5)-Zip-PDF.3f780187.pdf.zip',
+               'file_size': 515,
+               'file_type_category': 'A',
+               'file_type_description': 'ZIP Archive',
+               'file_type_extension': 'zip',
+               'md5': '361EEC79FFB4680BD47FCC6FE43D2AFD',
+               'sha1': 'BD1F3879538DBCA6146F15406E3267605BB000D0',
+               'sha256': '3F78018715E8DCAEB2C03A594FAC30F052E0CEE5CFE329D517C0C972ED1C469C',
+               'upload_timestamp': '2021-04-07T03:02:24.069Z'},
 
 ### Test cases
 1. PE files
