@@ -57,6 +57,9 @@ def metadefender_cloud_file_scan(file_path):
     }
 
     # Read file contents
+    # TODO:
+    #  1.  Check file size limit
+    #  2.  File could be huge so read/send in chunks
     data = open(file_path, "rb").read()
     
     # Make a request to metadefender cloud to scan the file
@@ -88,6 +91,8 @@ def metadefender_cloud_file_scan_poll(data_id, timeout=60):
             # sleep for 10 seconds before making the next request
             time.sleep(10)
             cnt += 1
+        else:
+            break
     
     return None
 
