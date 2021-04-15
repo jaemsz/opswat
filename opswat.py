@@ -6,6 +6,7 @@ import pprint
 import requests
 import sys
 import time
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 """
 NOTES:
@@ -58,11 +59,13 @@ def metadefender_cloud_file_scan(file_path):
         }
 
         # https://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
-        files = {
-            "file" : (file_name, open(file_path, "rb"), "application/octet-stream"),
-        }
+        # https://toolbelt.readthedocs.io/en/latest/uploading-data.html#streaming-multipart-data-encoder
+        m = MultipartEncoder(
+            fields = {
+                "files": (file_name, open(file_path, "rb"), "application/octet-stream")
+            })
 
-        response = requests.post("https://api.metadefender.com/v4/file", headers=headers, files=files)
+        response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=m)
         return json.loads(response.text)
 
     else:
