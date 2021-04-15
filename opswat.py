@@ -14,11 +14,6 @@ NOTES:
     2.  Office documents
     3.  Archive files (zip, 7z)
     4.  Polyglot (zip,pdf)
-
-    Inconsistant results with documentation:
-    1.  Expected a list of files in the archive in the scan result, but
-        did not see it in my testing.  As a result, I did not implement
-        any code to handle this case.    
 """
 
 
@@ -50,21 +45,42 @@ def metadefender_cloud_file_scan(file_path):
     Return: metadefender JSON response containing
             data_id
     """
-    headers = {
-        "apikey" : APIKEY,
-        "filename" : os.path.split(file_path)[1],
-        "content-type" : "application/octet-stream",
-    }
+    file_size = os.path.getsize(file_path)
+    file_name = os.path.split(file_path)[1]
 
-    # Read file contents
-    # TODO:
-    #  1.  Check file size limit
-    #  2.  File could be huge so read/send in chunks
-    data = open(file_path, "rb").read()
-    
-    # Make a request to metadefender cloud to scan the file
-    response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=data)
-    return json.loads(response.text)
+    # if file size is greater than 10 MB, send file in chunks
+    if file_size > 10485760:
+
+        headers = {
+            "apikey" : APIKEY,
+            "filename" : file_name,
+            "rule" : "unarchive",
+        }
+
+        # https://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
+        files = {
+            "file" : (file_name, open(file_path, "rb"), "application/octet-stream"),
+        }
+
+        response = requests.post("https://api.metadefender.com/v4/file", headers=headers, files=files)
+        return json.loads(response.text)
+
+    else:
+        headers = {
+            "apikey" : APIKEY,
+            "filename" : file_name,
+            "rule" : "unarchive",
+            "content-type" : "application/octet-stream"
+        }
+
+        # Read file contents
+        data = ""
+        with open(file_path, "rb") as f:
+            data = f.read()
+        
+        # Make a request to metadefender cloud to scan the file
+        response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=data)
+        return json.loads(response.text)
 
 
 def metadefender_cloud_file_scan_poll(data_id, timeout=60):
@@ -116,7 +132,7 @@ def display_scan_result(scan_result):
         print(f"threat_found: {threat_found}")
 
         scan_result_i = scan_result["scan_results"]["scan_details"][scan_engine]["scan_result_i"]
-        print(f"scan_result: {scan_result_i}")
+        print(f"scan_result_i: {scan_result_i}")
 
         def_time = scan_result["scan_results"]["scan_details"][scan_engine]["def_time"]
         print(f"def_time: {def_time}")
