@@ -51,19 +51,19 @@ def metadefender_cloud_file_scan(file_path):
 
     # if file size is greater than 10 MB, send file in chunks
     if file_size > 10485760:
-
-        headers = {
-            "apikey" : APIKEY,
-            "filename" : file_name,
-            "rule" : "unarchive",
-        }
-
         # https://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
         # https://toolbelt.readthedocs.io/en/latest/uploading-data.html#streaming-multipart-data-encoder
         m = MultipartEncoder(
             fields = {
                 "files": (file_name, open(file_path, "rb"), "application/octet-stream")
             })
+
+        headers = {
+            "apikey" : APIKEY,
+            "filename" : file_name,
+            "rule" : "unarchive",
+            "content-type" : m.content_type,
+        }
 
         response = requests.post("https://api.metadefender.com/v4/file", headers=headers, data=m)
         return json.loads(response.text)
