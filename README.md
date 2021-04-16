@@ -26,7 +26,8 @@ Create an application that will scan a specified file using metadefender cloud A
 ### Usage
 1. Install python 3.x
 2. pip install requests
-3. python opswat.py [path to file]
+3. pip install requests-toolbelt
+4. python opswat.py [path to file]
 
 ### Polygot files
 1. Polygot zip/pdf test case file was recognized as zip only.
