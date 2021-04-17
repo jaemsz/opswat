@@ -24,6 +24,7 @@ type ScanObject struct {
 	filePath    string
 	fileSha256  string
 	dataId      string
+	overall     float64
 	scanDetails map[string]interface{}
 }
 
@@ -93,6 +94,7 @@ func (scanObj *ScanObject) scanSha256() error {
 	// Save the scan_details in our scan object, so we
 	// can use it to display to stdout
 	scanRes := mdRes["scan_results"].(map[string]interface{})
+	scanObj.overall = scanRes["scan_all_result_a"].(float64)
 	scanObj.scanDetails = scanRes["scan_details"].(map[string]interface{})
 	return nil
 }
@@ -243,6 +245,10 @@ func (scanObj *ScanObject) pollScanResult() error {
 }
 
 func (scanObj *ScanObject) displayScanResult() {
+	fmt.Println("INFO: file = " + scanObj.filePath)
+	fmt.Println("INFO: SHA256 = " + scanObj.fileSha256)
+	fmt.Printf("%s: %.f", "scan_all_result_a\n", scanObj.overall)
+
 	// Enumerate the scan_details field and display
 	// all the scan results from the various
 	// scan engines that metadefender uses
@@ -267,14 +273,10 @@ func main() {
 	// Initialize our file object
 	scanObj := ScanObject{filePath: *filePath, apikey: *apiKey}
 
-	fmt.Println("INFO: file = " + *filePath)
-
 	if err := scanObj.computeFileSha256(); err != nil {
 		// Failed to compute SHA256
 		log.Fatal(err)
 	} else {
-		fmt.Println("INFO: SHA256 = " + scanObj.fileSha256)
-
 		if err := scanObj.scanSha256(); err != nil {
 			// File does not exist in Metadefender database,
 			// so let's upload the file
