@@ -247,7 +247,7 @@ func (scanObj *ScanObject) pollScanResult() error {
 func (scanObj *ScanObject) displayScanResult() {
 	fmt.Println("INFO: file = " + scanObj.filePath)
 	fmt.Println("INFO: SHA256 = " + scanObj.fileSha256)
-	fmt.Printf("%s: %.f", "scan_all_result_a\n", scanObj.overall)
+	fmt.Printf("%s: %.f\n", "scan_all_result_a", scanObj.overall)
 
 	// Enumerate the scan_details field and display
 	// all the scan results from the various
