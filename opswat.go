@@ -204,11 +204,12 @@ func (f *File) displayScanResult() {
 
 func main() {
 	// Parse the command line
+	apiKey := flag.String("k", "", "API key")
 	filePath := flag.String("f", "", "File")
 	flag.Parse()
 
 	// Initialize our file object
-	file := File{filePath: *filePath, apikey: "<API KEY>"}
+	file := File{filePath: *filePath, apikey: *apiKey}
 
 	if err := file.computeFileSha256(); err != nil {
 		// Failed to compute SHA256
