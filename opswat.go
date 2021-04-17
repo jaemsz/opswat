@@ -17,12 +17,6 @@ import (
 	"path/filepath"
 )
 
-type MetadefenderFile interface {
-	scanSha256(filePath string)
-	uploadScanFile(filePath string)
-	pollScanResult(dataId string)
-}
-
 type File struct {
 	filePath    string
 	fileSha256  string
