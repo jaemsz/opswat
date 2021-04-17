@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 )
 
-type File struct {
+type ScanObject struct {
 	apikey      string
 	filePath    string
 	fileSha256  string
@@ -25,12 +25,12 @@ type File struct {
 	scanDetails map[string]interface{}
 }
 
-func (f *File) computeFileSha256() error {
-	if _, err := os.Stat(f.filePath); err != nil {
-		return errors.New("File does not exist")
+func (scanObj *ScanObject) computeFileSha256() error {
+	if _, err := os.Stat(scanObj.filePath); err != nil {
+		return errors.New("file does not exist")
 	}
 
-	fileObject, err := os.Open(f.filePath)
+	fileObject, err := os.Open(scanObj.filePath)
 	if err != nil {
 		return err
 	}
@@ -41,17 +41,17 @@ func (f *File) computeFileSha256() error {
 		return err
 	}
 
-	f.fileSha256 = hex.EncodeToString(hash.Sum(nil))
+	scanObj.fileSha256 = hex.EncodeToString(hash.Sum(nil))
 	return nil
 }
 
-func (f *File) scanSha256() error {
-	req, err := http.NewRequest("GET", "https://api.metadefender.com/v4/hash/"+f.fileSha256, nil)
+func (scanObj *ScanObject) scanSha256() error {
+	req, err := http.NewRequest("GET", "https://api.metadefender.com/v4/hash/"+scanObj.fileSha256, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Add("apikey", f.apikey)
+	req.Header.Add("apikey", scanObj.apikey)
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -73,18 +73,18 @@ func (f *File) scanSha256() error {
 	}
 
 	if _, found := mdRes["error"]; found {
-		return errors.New("File is not in Metadefender database")
+		return errors.New("file is not in metadefender database")
 	}
 
 	scanRes := mdRes["scan_results"].(map[string]interface{})
-	f.scanDetails = scanRes["scan_details"].(map[string]interface{})
+	scanObj.scanDetails = scanRes["scan_details"].(map[string]interface{})
 	return nil
 }
 
-func (f *File) uploadScanFile() error {
+func (scanObj *ScanObject) uploadScanFile() error {
 	// Stole some code from the following URL
 	// https://matt.aimonetti.net/posts/2013-07-golang-multipart-file-upload-example/
-	file, err := os.Open(f.filePath)
+	file, err := os.Open(scanObj.filePath)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (f *File) uploadScanFile() error {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filepath.Base(f.filePath))
+	part, err := writer.CreateFormFile("file", filepath.Base(scanObj.filePath))
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (f *File) uploadScanFile() error {
 		return err
 	}
 
-	req.Header.Add("apikey", f.apikey)
+	req.Header.Add("apikey", scanObj.apikey)
 	req.Header.Set("content-type", writer.FormDataContentType())
 
 	client := &http.Client{}
@@ -136,23 +136,22 @@ func (f *File) uploadScanFile() error {
 	}
 
 	if _, found := mdRes["error"]; found {
-		return errors.New("File is not in Metadefender database")
+		return errors.New("file is not in metadefender database")
 	}
 
-	f.dataId = mdRes["data_id"].(string)
+	scanObj.dataId = mdRes["data_id"].(string)
 	return nil
 }
 
-func (f *File) pollScanResult() error {
-	req, err := http.NewRequest("GET", "https://api.metadefender.com/v4/file/"+f.dataId, nil)
+func (scanObj *ScanObject) pollScanResult() error {
+	req, err := http.NewRequest("GET", "https://api.metadefender.com/v4/file/"+scanObj.dataId, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Add("apikey", f.apikey)
+	req.Header.Add("apikey", scanObj.apikey)
 
 	client := &http.Client{}
-
 	res, err := client.Do(req)
 	if err != nil {
 		return err
@@ -161,7 +160,6 @@ func (f *File) pollScanResult() error {
 	defer res.Body.Close()
 
 	for {
-
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			return err
@@ -177,7 +175,7 @@ func (f *File) pollScanResult() error {
 		progPercent := scanRes["progress_percentage"].(float64)
 
 		if progPercent == 100 {
-			f.scanDetails = scanRes["scan_details"].(map[string]interface{})
+			scanObj.scanDetails = scanRes["scan_details"].(map[string]interface{})
 			break
 		}
 
@@ -190,8 +188,8 @@ func (f *File) pollScanResult() error {
 	return nil
 }
 
-func (f *File) displayScanResult() {
-	for key, val := range f.scanDetails {
+func (scanObj *ScanObject) displayScanResult() {
+	for key, val := range scanObj.scanDetails {
 		fmt.Println("Scan Engine: " + key)
 
 		scanEngDetails := val.(map[string]interface{})
@@ -209,34 +207,33 @@ func main() {
 	flag.Parse()
 
 	// Initialize our file object
-	file := File{filePath: *filePath, apikey: *apiKey}
+	scanObj := ScanObject{filePath: *filePath, apikey: *apiKey}
 
-	if err := file.computeFileSha256(); err != nil {
+	if err := scanObj.computeFileSha256(); err != nil {
 		// Failed to compute SHA256
 		log.Fatal(err)
 	} else {
-		if err := file.scanSha256(); err != nil {
+		if err := scanObj.scanSha256(); err != nil {
 			// File does not exist in Metadefender database,
 			// so let's upload the file
-			if err := file.uploadScanFile(); err != nil {
+			if err := scanObj.uploadScanFile(); err != nil {
 				// File upload failed
 				log.Fatal(err)
 			} else {
 				// File upload succeeded, so let's poll
 				// Metadefender cloud for scan result
-				if err := file.pollScanResult(); err != nil {
+				if err := scanObj.pollScanResult(); err != nil {
 					// Polling for scan result failed
 					log.Fatal(err)
 				} else {
 					// Display the scan result
-					file.displayScanResult()
+					scanObj.displayScanResult()
 				}
 			}
 		} else {
 			// File SHA256 scan succeeded, so let's display
 			// the scan result
-			file.displayScanResult()
+			scanObj.displayScanResult()
 		}
-
 	}
 }
