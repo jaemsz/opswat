@@ -18,6 +18,7 @@ import (
 )
 
 type File struct {
+	apikey      string
 	filePath    string
 	fileSha256  string
 	dataId      string
@@ -50,7 +51,7 @@ func (f *File) scanSha256() error {
 		return err
 	}
 
-	req.Header.Add("apikey", "e964575df55d1c7af6399011da3224d5")
+	req.Header.Add("apikey", f.apikey)
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -112,7 +113,7 @@ func (f *File) uploadScanFile() error {
 		return err
 	}
 
-	req.Header.Add("apikey", "e964575df55d1c7af6399011da3224d5")
+	req.Header.Add("apikey", f.apikey)
 	req.Header.Set("content-type", writer.FormDataContentType())
 
 	client := &http.Client{}
@@ -148,7 +149,7 @@ func (f *File) pollScanResult() error {
 		return err
 	}
 
-	req.Header.Add("apikey", "e964575df55d1c7af6399011da3224d5")
+	req.Header.Add("apikey", f.apikey)
 
 	client := &http.Client{}
 
@@ -207,7 +208,7 @@ func main() {
 	flag.Parse()
 
 	// Initialize our file object
-	file := File{filePath: *filePath}
+	file := File{filePath: *filePath, apikey: "<API KEY>"}
 
 	if err := file.computeFileSha256(); err != nil {
 		// Failed to compute SHA256
